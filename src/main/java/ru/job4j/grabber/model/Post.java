@@ -83,7 +83,8 @@ public class Post {
     @Override
     public String toString() {
         return String.format(
-                "Post {%sid: %d%stitle: %s%slink: %s%sdescription: %s%screated: %s%s}",
+                "%sPost {%sid: %d%stitle: %s%slink: %s%sdescription: %s%screated: %s%s}",
+                System.lineSeparator(),
                 System.lineSeparator(),
                 id,
                 System.lineSeparator(),
