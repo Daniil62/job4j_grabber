@@ -16,6 +16,7 @@ public class SqlRuParse implements Parse {
 
     private final DateTimeParser dateTimeParser;
 
+    private static final String PATH = "https://www.sql.ru/forum/job-offers/";
     private static final String CSS_QUERY_POST_CLASSNAME = ".postslisttopic";
     private static final String CSS_QUERY_MESSAGE_HEADER_CLASSNAME = ".messageHeader";
     private static final String CSS_QUERY_MESSAGE_BODY_CLASSNAME = ".msgBody";
@@ -32,13 +33,12 @@ public class SqlRuParse implements Parse {
     }
 
     @Override
-    public List<Post> list(String link) {
+    public List<Post> list() {
         List<Post> result = new ArrayList<>();
         Document doc = null;
-        String path = link.endsWith("/") ? link : link + "/";
         for (int i = 1; i <= PAGES_COUNT; i++) {
             try {
-                doc = Jsoup.connect(String.format("%s%d", path, i)).get();
+                doc = Jsoup.connect(String.format("%s%d", PATH, i)).get();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -74,13 +74,11 @@ public class SqlRuParse implements Parse {
         ) : null;
     }
 
-    public void showPosts(String link) {
-        for (Post post : list(link)) {
-            System.out.print(post.toString());
-        }
+    public void showPosts() {
+        list().forEach(System.out::println);
     }
 
     public static void main(String[] args) {
-        new SqlRuParse(new SqlRuDateTimeParser()).showPosts("https://www.sql.ru/forum/job-offers");
+        new SqlRuParse(new SqlRuDateTimeParser()).showPosts();
     }
 }
