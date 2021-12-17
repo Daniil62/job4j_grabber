@@ -2,6 +2,7 @@ package ru.job4j.grabber;
 
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
+import ru.job4j.grabber.model.Post;
 import ru.job4j.grabber.repository.Parse;
 import ru.job4j.grabber.repository.SqlRuParse;
 import ru.job4j.grabber.storage.PsqlStore;
@@ -10,6 +11,8 @@ import ru.job4j.grabber.storage.config.Configurator;
 import ru.job4j.grabber.utils.SqlRuDateTimeParser;
 
 import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Properties;
 
 import static org.quartz.JobBuilder.newJob;
@@ -24,6 +27,8 @@ public class Grabber implements Grab {
     private static final String PARSE = "parse";
     private static final String STORE = "store";
     private static final String TIME_KEY = "time";
+    private static final String PORT_KEY = "port";
+    private static final String CONNECTION = "HTTP/1.1 200 OK\r\n\r\n";
 
     public Grabber() {
         configure();
@@ -82,6 +87,26 @@ public class Grabber implements Grab {
                     .repeatForever();
     }
 
+    public void web(Store store) {
+        new Thread(() -> {
+            try (ServerSocket server = new ServerSocket(Integer.parseInt(config.getProperty(PORT_KEY)))) {
+                while (!server.isClosed()) {
+                    Socket socket = server.accept();
+                    try (OutputStream out = socket.getOutputStream()) {
+                        out.write(CONNECTION.getBytes());
+                        for (Post post : store.getAll()) {
+                            out.write(post.toString().getBytes());
+                        }
+                    } catch (IOException io) {
+                        io.printStackTrace();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     public static class GrabJob implements Job {
 
         @Override
@@ -102,5 +127,6 @@ public class Grabber implements Grab {
         grab.init(new SqlRuParse(new SqlRuDateTimeParser()), store, scheduler);
 
         store.getAll().forEach(System.out::println);
+        grab.web(store);
     }
 }
